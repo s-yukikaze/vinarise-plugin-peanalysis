@@ -109,6 +109,7 @@ function! s:peanalysis_show_sections()"{{{
   let context = s:create_peanalysis_context()
   if context.initialize(vinarise#get_current_vinarise()) == 0
     echo 'Invalid file.'
+    return
   endif
   let baseaddr = context.get_base_address()
   let idx = 1
@@ -148,10 +149,12 @@ function! s:peanalysis_move_to_virtual_address(input)"{{{
   let context = s:create_peanalysis_context()
   if context.initialize(vinarise#get_current_vinarise()) == 0
     echo 'Invalid file.'
+    return
   endif
   let fileaddr = context.address_virtual_to_file(address)
   if fileaddr < 0
     echo 'Invalid address.'
+    return
   endif
 
   call vinarise#mappings#move_to_address(fileaddr)
@@ -161,12 +164,14 @@ function! s:peanalysis_move_to_entry_point()"{{{
   let context = s:create_peanalysis_context()
   if context.initialize(vinarise#get_current_vinarise()) == 0
     echo 'Invalid file.'
+    return
   endif
 
   let address = context.get_entry_point()
   let fileaddr = context.address_virtual_to_file(address)
   if fileaddr < 0
     echo 'Invalid address.'
+    return
   endif
 
   call vinarise#mappings#move_to_address(fileaddr)

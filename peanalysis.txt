@@ -65,6 +65,7 @@ CHANGELOG					*peanalysis-changelog*
 
 2012-02-26
 - Initial revision.
+- Fixed invalid data handling.
 
 
 ==============================================================================
