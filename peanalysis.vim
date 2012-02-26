@@ -188,17 +188,17 @@ function! s:create_peanalysis_context()"{{{
       return 0
     endif
     let self.filehdr = self.nthdr + s:IMAGE_NT_HEADERS32.FileHeader
-    let self.secnum = self.read16(self.filehdr + s:IMAGE_FILE_HEADER.NumberOfSections)
-    let self.opthdrsize = self.read16(self.filehdr + s:IMAGE_FILE_HEADER.SizeOfOptionalHeader)
+    let self.secnum = self.get_int16le(self.filehdr + s:IMAGE_FILE_HEADER.NumberOfSections)
+    let self.opthdrsize = self.get_int16le(self.filehdr + s:IMAGE_FILE_HEADER.SizeOfOptionalHeader)
     if !(self.secnum > 0 && self.opthdrsize >= s:IMAGE_OPTIONAL_HEADER.__size__)
       return 0
     endif
   
     let self.opthdr = self.nthdr + s:IMAGE_NT_HEADERS32.OptionalHeader
-    let self.baseaddr = self.read32(self.opthdr + s:IMAGE_OPTIONAL_HEADER.ImageBase)
-    let self.entrypoint = self.read32(self.opthdr + s:IMAGE_OPTIONAL_HEADER.AddressOfEntryPoint)
-    let self.rawalign = self.read32(self.opthdr + s:IMAGE_OPTIONAL_HEADER.FileAlignment)
-    let self.virtalign = self.read32(self.opthdr + s:IMAGE_OPTIONAL_HEADER.SectionAlignment)
+    let self.baseaddr = self.get_int32le(self.opthdr + s:IMAGE_OPTIONAL_HEADER.ImageBase)
+    let self.entrypoint = self.get_int32le(self.opthdr + s:IMAGE_OPTIONAL_HEADER.AddressOfEntryPoint)
+    let self.rawalign = self.get_int32le(self.opthdr + s:IMAGE_OPTIONAL_HEADER.FileAlignment)
+    let self.virtalign = self.get_int32le(self.opthdr + s:IMAGE_OPTIONAL_HEADER.SectionAlignment)
     if !(512 <= self.rawalign && self.rawalign <= 65536 && s:get_hamming_weight(self.rawalign) == 1)
       return 0
     endif
@@ -211,12 +211,12 @@ function! s:create_peanalysis_context()"{{{
     for i in range(self.secnum)
       let sechdr = self.sechdrs + i * s:IMAGE_SECTION_HEADER.__size__
       call add(self.sections, {
-        \ 'name' : self.readstr(sechdr + s:IMAGE_SECTION_HEADER.Name, s:IMAGE_SIZEOF_SHORT_NAME),
-        \ 'rawsize' : s:align(self.read32(sechdr + s:IMAGE_SECTION_HEADER.SizeOfRawData), self.rawalign),
-        \ 'rawaddr' : s:align(self.read32(sechdr + s:IMAGE_SECTION_HEADER.PointerToRawData), self.rawalign),
-        \ 'virtsize' : s:align(self.read32(sechdr + s:IMAGE_SECTION_HEADER.VirtualSize), self.virtalign),
-        \ 'virtaddr' : s:align(self.read32(sechdr + s:IMAGE_SECTION_HEADER.VirtualAddress), self.virtalign),
-        \ 'attr' : self.read16(sechdr + s:IMAGE_SECTION_HEADER.Characteristics)
+        \ 'name' : self.get_ascii_cstr(sechdr + s:IMAGE_SECTION_HEADER.Name, s:IMAGE_SIZEOF_SHORT_NAME),
+        \ 'rawsize' : s:align(self.get_int32le(sechdr + s:IMAGE_SECTION_HEADER.SizeOfRawData), self.rawalign),
+        \ 'rawaddr' : s:align(self.get_int32le(sechdr + s:IMAGE_SECTION_HEADER.PointerToRawData), self.rawalign),
+        \ 'virtsize' : s:align(self.get_int32le(sechdr + s:IMAGE_SECTION_HEADER.VirtualSize), self.virtalign),
+        \ 'virtaddr' : s:align(self.get_int32le(sechdr + s:IMAGE_SECTION_HEADER.VirtualAddress), self.virtalign),
+        \ 'attr' : self.get_int16le(sechdr + s:IMAGE_SECTION_HEADER.Characteristics)
         \})
     endfor
     return 1
@@ -265,34 +265,34 @@ function! s:create_peanalysis_context()"{{{
   function! self.get_nt_headers_offset()"{{{
     " Verify DOS header signature
     let doshdr = 0
-    let dossig = self.read16(doshdr + s:IMAGE_DOS_HEADER.e_magic)
+    let dossig = self.get_int16le(doshdr + s:IMAGE_DOS_HEADER.e_magic)
     if dossig != s:IMAGE_DOS_SIGNATURE
       return -1
     endif
   
-    let nthdr_est = self.read8(doshdr + s:IMAGE_DOS_HEADER.e_lfanew)
+    let nthdr_est = self.get_byte(doshdr + s:IMAGE_DOS_HEADER.e_lfanew)
   
     " Verify NT headers signature
-    let ntsig = self.read32(nthdr_est + s:IMAGE_NT_HEADERS32.Signature)
+    let ntsig = self.get_int32le(nthdr_est + s:IMAGE_NT_HEADERS32.Signature)
     if ntsig != s:IMAGE_NT_SIGNATURE
       return -1
     endif
     return nthdr_est 
   endfunction"}}}
   
-  function! self.read8(offset)"{{{
+  function! self.get_byte(offset)"{{{
     return self.vinarise.get_byte(a:offset)
   endfunction"}}}
-  function! self.read16(offset)"{{{
+  function! self.get_int16le(offset)"{{{
     let bytes = self.vinarise.get_bytes(a:offset, 3)
     return bytes[0] + bytes[1] * 0x100
   endfunction"}}}
-  function! self.read32(offset)"{{{
+  function! self.get_int32le(offset)"{{{
     let bytes = self.vinarise.get_bytes(a:offset, 5)
     return bytes[0] + bytes[1] * 0x100 + bytes[2] * 0x10000 + bytes[3] * 0x1000000
   endfunction"}}}
 
-  function! self.readstr(offset, maxlen)"{{{
+  function! self.get_ascii_cstr(offset, maxlen)"{{{
     let bytes = self.vinarise.get_bytes(a:offset, a:maxlen + 1)
     let str = ""
     for c in bytes
