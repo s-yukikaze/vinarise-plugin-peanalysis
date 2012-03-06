@@ -1,5 +1,5 @@
 " Author:  Sakura-yukikaze <sakura_yukikaze@live.jp>
-" Version: 0.0.2
+" Version: 0.0.3
 " License: MIT License (see below)
 " {{{
 " Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -283,16 +283,16 @@ function! s:peanalysis_context.get_byte(offset)"{{{
   return self.vinarise.get_byte(a:offset)
 endfunction"}}}
 function! s:peanalysis_context.get_int16le(offset)"{{{
-  let bytes = self.vinarise.get_bytes(a:offset, 3)
+  let bytes = self.vinarise.get_bytes(a:offset, 2)
   return bytes[0] + bytes[1] * 0x100
 endfunction"}}}
 function! s:peanalysis_context.get_int32le(offset)"{{{
-  let bytes = self.vinarise.get_bytes(a:offset, 5)
+  let bytes = self.vinarise.get_bytes(a:offset, 4)
   return bytes[0] + bytes[1] * 0x100 + bytes[2] * 0x10000 + bytes[3] * 0x1000000
 endfunction"}}}
 
 function! s:peanalysis_context.get_ascii_cstr(offset, maxlen)"{{{
-  let bytes = self.vinarise.get_bytes(a:offset, a:maxlen + 1)
+  let bytes = self.vinarise.get_bytes(a:offset, a:maxlen)
   let str = ""
   for c in bytes
     if c == 0
