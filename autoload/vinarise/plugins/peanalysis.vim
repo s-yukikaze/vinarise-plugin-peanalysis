@@ -1,5 +1,5 @@
 " Author:  Sakura-yukikaze <sakura_yukikaze@live.jp>
-" Version: 0.0.3
+" Version: 0.0.4
 " License: MIT License (see below)
 " {{{
 " Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -308,14 +308,31 @@ endfunction"}}}
 
 " Utility functions
 function! s:get_hamming_weight(source)"{{{
-  let weight = a:source
-  let weight = and(weight, 0x55555555) + and(weight / 0x00002, 0x55555555)
-  let weight = and(weight, 0x33333333) + and(weight / 0x00004, 0x33333333)
-  let weight = and(weight, 0x0F0F0F0F) + and(weight / 0x00010, 0x0F0F0F0F)
-  let weight = and(weight, 0x00FF00FF) + and(weight / 0x00100, 0x00FF00FF)
-  let weight = and(weight, 0x0000FFFF) + and(weight / 0x10000, 0x0000FFFF)
+  let [_source, weight] = a:source < 0 ? [a:source + 0x80000000, 1] : [a:source, 0]
+  while _source
+    let weight += s:hamming_weight_byte[_source % 0x100]
+    let _source = _source / 0x100
+  endwhile
   return weight
-endfunction'}}}
+endfunction
+let s:hamming_weight_byte = [
+ \ 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
+ \ 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+ \ 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+ \ 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+ \ 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+ \ 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+ \ 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+ \ 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+ \ 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+ \ 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+ \ 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+ \ 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+ \ 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+ \ 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+ \ 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+ \ 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
+ \]"}}}
 
 function! s:align(source, align)"{{{
   return (a:source + a:align - 1) / a:align * a:align
