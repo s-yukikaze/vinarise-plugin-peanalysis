@@ -19,6 +19,8 @@ let s:IMAGE_NT_SIGNATURE = 0x4550
 
 let s:IMAGE_SIZEOF_SHORT_NAME = 8
 
+let s:ACCEPTABLE_MINIMUM_SIZE_OF_OPTIONAL_HEADER = 40
+
 " Structure field offsets and structure sizes
 let s:IMAGE_DOS_HEADER = {
  \ 'e_magic' : 0,
@@ -191,8 +193,8 @@ function! s:peanalysis_context.initialize(vinarise)"{{{
   if self.secnum < 1
     throw "PEAnalysis: The file has no section."
   endif
-  if self.opthdrsize < s:IMAGE_OPTIONAL_HEADER.__size__
-    throw "PEAnalysis: FileHeader.SizeOfOptionalHeader is less than the regular length of OptionalHeader."
+  if self.opthdrsize < s:ACCEPTABLE_MINIMUM_SIZE_OF_OPTIONAL_HEADER
+    throw "PEAnalysis: FileHeader.SizeOfOptionalHeader is less than the acceptable minimum."
   endif
 
   let self.opthdr = self.nthdr + s:IMAGE_NT_HEADERS32.OptionalHeader
