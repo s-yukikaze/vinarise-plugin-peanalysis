@@ -101,7 +101,7 @@ let s:plugin = {
  \ 'description' : 'PE file analysis feature'
  \}
 
-function! s:plugin.initialize(vinarise, context)"{{{
+function! s:plugin.initialize(vinarise, context) "{{{
   command! VinarisePluginPEAnalysisShowSections call s:peanalysis_show_sections()
   command! VinarisePluginPEAnalysisShowVA call s:peanalysis_show_virtual_address()
   command! -nargs=? VinarisePluginPEAnalysisMoveToVA call s:peanalysis_move_to_virtual_address(<q-args>)
@@ -126,7 +126,7 @@ function! s:peanalysis_show_sections()"{{{
   endfor
 endfunction"}}}
 
-function! s:peanalysis_show_virtual_address()"{{{
+function! s:peanalysis_show_virtual_address() "{{{
   let [type, address] = vinarise#parse_address(getline('.'), vinarise#cur_text(getline('.'), col('.')))
 
   try
@@ -140,7 +140,7 @@ function! s:peanalysis_show_virtual_address()"{{{
   echo printf("Virtual Address of %08x: %08x", address, vaddr)
 endfunction"}}}
 
-function! s:peanalysis_move_to_virtual_address(input)"{{{
+function! s:peanalysis_move_to_virtual_address(input) "{{{
   let offset = (a:input == '') ? input('Please input address : 0x', '') : a:input
 
   if offset =~ '^\x\+$'
@@ -162,7 +162,7 @@ function! s:peanalysis_move_to_virtual_address(input)"{{{
   call vinarise#mappings#move_to_address(fileaddr)
 endfunction"}}}
 
-function! s:peanalysis_move_to_entry_point()"{{{
+function! s:peanalysis_move_to_entry_point() "{{{
   try
     let context = copy(s:PEContext).init(vinarise#get_current_vinarise())
     let address = context.base_address() + context.entry_point()
@@ -179,7 +179,7 @@ endfunction"}}}
 " PE File Context class
 let s:PEContext = {}
 
-function! s:PEContext.init(vinarise)"{{{
+function! s:PEContext.init(vinarise) "{{{
   let self._vinarise = a:vinarise
 
   " Parse NTHeaders#FileHeader
@@ -224,7 +224,7 @@ function! s:PEContext.init(vinarise)"{{{
   return self
 endfunction"}}}
 
-function! s:PEContext.address_file_to_virtual(address)"{{{
+function! s:PEContext.address_file_to_virtual(address) "{{{
   for sec in self._sections
     if sec.rawaddr <= a:address && a:address < sec.rawaddr + sec.rawsize
       let offset = a:address - sec.rawaddr
@@ -236,7 +236,7 @@ function! s:PEContext.address_file_to_virtual(address)"{{{
   throw "PEAnalysis: Invaild address."
 endfunction"}}}
 
-function! s:PEContext.address_virtual_to_file(address)"{{{
+function! s:PEContext.address_virtual_to_file(address) "{{{
   if a:address >= self._baseaddr
     let rva = a:address - self._baseaddr
     for sec in self._sections
@@ -251,19 +251,19 @@ function! s:PEContext.address_virtual_to_file(address)"{{{
   throw "PEAnalysis: Invalid address."
 endfunction"}}}
 
-function! s:PEContext.sections()"{{{
+function! s:PEContext.sections() "{{{
   return self._sections
 endfunction"}}}
 
-function! s:PEContext.entry_point()"{{{
+function! s:PEContext.entry_point() "{{{
   return self._entrypoint
 endfunction"}}}
 
-function! s:PEContext.base_address()"{{{
+function! s:PEContext.base_address() "{{{
   return self._baseaddr
 endfunction"}}}
 
-function! s:PEContext.nt_headers_offset()"{{{
+function! s:PEContext.nt_headers_offset() "{{{
   " Verify DOS header signature
   let doshdr = 0
   let dossig = self.get_int16le(doshdr + s:IMAGE_DOS_HEADER.e_magic)
@@ -281,19 +281,19 @@ function! s:PEContext.nt_headers_offset()"{{{
   return nthdr
 endfunction"}}}
 
-function! s:PEContext.get_byte(offset)"{{{
+function! s:PEContext.get_byte(offset) "{{{
   return self._vinarise.get_byte(a:offset)
 endfunction"}}}
 function! s:PEContext.get_int16le(offset)"{{{
   let bytes = self._vinarise.get_bytes(a:offset, 2)
   return bytes[0] + bytes[1] * 0x100
 endfunction"}}}
-function! s:PEContext.get_int32le(offset)"{{{
+function! s:PEContext.get_int32le(offset) "{{{
   let bytes = self._vinarise.get_bytes(a:offset, 4)
   return bytes[0] +  bytes[1] * 0x100 + bytes[2] * 0x10000 + bytes[3] * 0x1000000
 endfunction"}}}
 
-function! s:PEContext.get_ascii_cstr(offset, maxlen)"{{{
+function! s:PEContext.get_ascii_cstr(offset, maxlen) "{{{
   let bytes = self._vinarise.get_bytes(a:offset, a:maxlen)
   let str = ""
   for c in bytes
@@ -306,7 +306,7 @@ function! s:PEContext.get_ascii_cstr(offset, maxlen)"{{{
 endfunction"}}}
 
 " Utility functions
-function! s:get_hamming_weight(source)"{{{
+function! s:get_hamming_weight(source) "{{{
   let [_source, weight] = a:source < 0 ? [a:source + 0x80000000, 1] : [a:source, 0]
   while _source
     let weight += s:hamming_weight_byte[_source % 0x100]
@@ -333,7 +333,7 @@ let s:hamming_weight_byte = [
  \ 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
  \]"}}}
 
-function! s:align(source, align)"{{{
+function! s:align(source, align) "{{{
   return (a:source + a:align - 1) / a:align * a:align
 endfunction"}}}
 
